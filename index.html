@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>MA Schools of Recognition</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+  /* Layout: full-width header, then a map pane beside a searchable school list; stacks on phones. */
+  :root {
+    --bg: #eef1f4;
+    --panel: #ffffff;
+    --ink: #14202e;
+    --muted: #5b6b7c;
+    --line: #d5dce3;
+    --sea: #dfe9f1;
+    --land: #fbfcfd;
+    --land-other: #e3e8ed;
+    --edge: #8a9bad;
+    --l-elem: #1d4f91;
+    --l-middle: #b7791f;
+    --l-high: #c2410c;
+    --l-midhigh: #0f766e;
+    --l-k12: #7e3fb5;
+    --focus: #14202e;
+    --font-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e151d; --panel: #16202b; --ink: #e6ecf2; --muted: #93a3b4; --line: #2a3745;
+      --sea: #0b1118; --land: #1c2a38; --land-other: #141d27; --edge: #5d7389;
+      --l-elem: #6aa4f0; --l-middle: #e3b04b; --l-high: #f08a4b; --l-midhigh: #3fc4b4; --l-k12: #bf8cf0; --focus: #e6ecf2;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e151d; --panel: #16202b; --ink: #e6ecf2; --muted: #93a3b4; --line: #2a3745;
+    --sea: #0b1118; --land: #1c2a38; --land-other: #141d27; --edge: #5d7389;
+    --l-elem: #6aa4f0; --l-middle: #e3b04b; --l-high: #f08a4b; --l-midhigh: #3fc4b4; --l-k12: #bf8cf0; --focus: #e6ecf2;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 14px; line-height: 1.45;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 20px 28px;
+  }
+  .wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: 16px; }
+  header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; }
+  h1 { margin: 0; font-size: clamp(22px, 3.4vw, 32px); line-height: 1.1; letter-spacing: -0.02em; font-weight: 700; text-wrap: balance; }
+  .sub { margin: 6px 0 0; color: var(--muted); max-width: 62ch; }
+  .filters { display: grid; gap: 8px; justify-items: start; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; }
+  .legend.gov .chip { border-style: dashed; }
+  .legend.gov .chip i { display: none; }
+  .legend.gov .chip[aria-pressed="true"] { border-style: solid; background: var(--ink); color: var(--bg); }
+  .legend.gov .chip[aria-pressed="true"] b { color: inherit; opacity: .75; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border: 1px solid var(--line); background: var(--panel);
+    color: var(--ink); font: inherit; font-size: 13px; border-radius: 999px; cursor: pointer;
+  }
+  .chip i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); display: block; }
+  .chip b { font-family: var(--font-mono); font-weight: 500; color: var(--muted); font-size: 12px; }
+  .chip[aria-pressed="false"] { opacity: .45; }
+  .chip[aria-pressed="false"] i { background: transparent; box-shadow: inset 0 0 0 2px var(--c); }
+  .chip:focus-visible, button:focus-visible, input:focus-visible, .row:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+  .mapbox { position: relative; background: var(--sea); border: 1px solid var(--line); overflow: hidden; border-radius: 6px; }
+  svg { display: block; width: 100%; height: auto; touch-action: none; cursor: grab; user-select: none; }
+  svg.drag { cursor: grabbing; }
+  .nb { fill: var(--land-other); stroke: var(--edge); stroke-width: .6; }
+  .ma { fill: var(--land); stroke: var(--edge); stroke-width: 1; }
+  .co { fill: none; stroke: var(--line); stroke-width: .7; }
+  .dot { stroke: var(--panel); stroke-width: 1.2; cursor: pointer; }
+  .dot.elem { fill: var(--l-elem); } .dot.middle { fill: var(--l-middle); } .dot.high { fill: var(--l-high); } .dot.midhigh { fill: var(--l-midhigh); } .dot.k12 { fill: var(--l-k12); }
+  .dot.hot { stroke: var(--ink); stroke-width: 2; }
+  .dot.dim { opacity: .18; }
+  .ctrl { position: absolute; top: 10px; right: 10px; display: grid; gap: 4px; }
+  .ctrl button { width: 34px; height: 34px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font: 600 17px var(--font-body); border-radius: 4px; cursor: pointer; }
+  .tip {
+    position: absolute; pointer-events: none; background: var(--ink); color: var(--bg); padding: 8px 10px; border-radius: 4px;
+    font-size: 12.5px; max-width: 260px; transform: translate(-50%, calc(-100% - 12px)); display: none; z-index: 3;
+  }
+  .tip strong { display: block; font-weight: 600; }
+  .tip span { opacity: .8; }
+  .note { position: absolute; left: 10px; bottom: 8px; font: 400 11px var(--font-mono); color: var(--muted); background: color-mix(in srgb, var(--panel) 85%, transparent); padding: 3px 7px; border-radius: 3px; max-width: calc(100% - 20px); }
+  aside { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; display: grid; grid-template-rows: auto minmax(0, 1fr); max-height: 640px; min-width: 0; }
+  .search { padding: 10px; border-bottom: 1px solid var(--line); }
+  .search input { width: 100%; padding: 9px 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; border-radius: 4px; }
+  .count { margin: 6px 2px 0; font: 400 12px var(--font-mono); color: var(--muted); }
+  .list { overflow-y: auto; margin: 0; padding: 0; list-style: none; }
+  .row { display: grid; grid-template-columns: 10px minmax(0, 1fr); gap: 10px; padding: 9px 12px; border-bottom: 1px solid var(--line); cursor: pointer; }
+  .row:hover, .row.hot { background: var(--bg); }
+  .row i { width: 9px; height: 9px; border-radius: 50%; margin-top: 5px; background: var(--c); }
+  .row .n { font-weight: 500; overflow-wrap: anywhere; }
+  .row .ad { font-size: 13px; }
+  .row .m { color: var(--muted); font-size: 12.5px; }
+  .tip em { display: block; font-style: normal; opacity: .65; font-size: 11.5px; margin-top: 3px; }
+  .foot { color: var(--muted); font-size: 12.5px; max-width: 90ch; margin: 0; }
+  @media (max-width: 860px) { main { grid-template-columns: minmax(0, 1fr); } aside { max-height: 420px; } }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Massachusetts Schools of Recognition, 2026</h1>
+      <p class="sub">All 56 recognized schools plotted by town. Color shows school level, and the outlined filters narrow by district, charter or vocational. Scroll or use the buttons to zoom, drag to pan, and select a school in the list to find it on the map.</p>
+    </div>
+    <div class="filters">
+      <div class="legend" id="legend" role="group" aria-label="Filter by school level"></div>
+      <div class="legend gov" id="gov" role="group" aria-label="Filter by governance"></div>
+    </div>
+  </header>
+  <main>
+    <div class="mapbox" id="mapbox">
+      <svg id="svg" viewBox="0 0 900 520" role="img" aria-label="Map of Massachusetts with 56 schools of recognition">
+        <g id="world">
+          <path class="nb" d="M54.964,260.431L66.965,260.448L161.268,265.961L204.452,267.449L203.473,279.037L214.703,277.66L217.252,267.642L250.832,269.654L268.445,268.843L430.046,273.454L430.83,278.098L430.733,305.684L432.945,362.929L432.814,401.603L430.209,455.483L420.506,457.509L422.854,477.115L416.352,484.566L410.71,479.642L396.962,479.059L379.937,485.151L365.378,484.283L354.814,490.396L341.923,483.076L336.989,492.577L297.233,501.229L294.858,496.047L282.714,495.915L260.751,504.167L255.959,498.693L234.91,498.159L229.149,504.784L214.657,498.646L182.156,505.103L179.981,489.595L172.623,493.856L156.869,514.731L147.144,514.556L128.957,533.044L118.528,526.91L98.758,541.47L93.148,538L74.329,544.818L78.263,550.579L69.962,558.65L46.341,560.95L28.132,574.445L20.912,570.399L8.493,579.117L9.521,570.631L-6.047,543.919L49.923,511.768L35.129,486.4L39.357,444.976L45.193,369.032Z M497.274,-624.233L499.559,-641.787L513.255,-658.316L510.969,-662.186L519.316,-681.299L509.429,-690.584L523.099,-693.439L526.126,-700.156L542.802,-711.035L554.234,-695.317L575.504,-694.106L585.29,-712.224L597.746,-516.884L607.508,-294.805L607.645,-271.849L612.03,-191.149L616.752,-185.248L612.207,-162.524L615.351,-159.965L609.251,-133.882L616.386,-120.258L648.784,-87.486L644.159,-76.618L644.298,-58.827L672.012,-38.179L648.76,6.89L647.273,18.247L640.983,21.648L629.084,14L600.714,22.429L593.689,38.452L578.653,33.882L566.835,43.211L567.685,59.194L551.07,59.506L543.187,71.387L443.439,68.271L285.983,61.23L279.02,47.484L274.245,50.007L265.081,23.595L272.414,4.861L273.379,-9.826L283.656,-12.284L290.09,-23.816L285.516,-37.276L292.694,-45.705L288.947,-62.508L292.482,-98.055L302.07,-114.456L297.533,-129.978L305.725,-164.707L301.911,-173.773L306.015,-192.815L317.807,-201.208L322.753,-229.273L329.868,-240.556L344.753,-251.518L349.512,-262.828L348.867,-279.34L363.755,-296.508L363.914,-318.433L373.294,-329.717L382.703,-347.455L382.779,-359.579L375.16,-377.171L379.891,-391.845L375.316,-400.647L383.133,-416.334L410.164,-424.441L417.858,-421.052L430.214,-426.421L434.115,-439.823L452.608,-443.381L463.408,-453.42L468.814,-465.022L481.125,-470.683L476.529,-485.912L484.982,-489.259L486.53,-508.095L478.867,-517.908L470.469,-544.241L481.968,-557.648L485.04,-574.163L498.801,-593.517L488.883,-616.491Z M376.584,503.696L379.043,499.07L400.933,493.52L383.869,504.514ZM351.931,550.715L356.028,545.588L364.928,549.777L364.84,562.67L360.03,553.611ZM335.907,525.058L348.912,521.037L339.093,532.047ZM-87.936,673.706L-84.368,691.101L-92.033,700.934L-123.766,720.074L-132.783,720.042L-129.91,707.232L-122.413,703.344L-118.453,681.793ZM-557.112,-312.241L-543.975,-324.411L-548.508,-313.042ZM-573.89,-318.117L-563.992,-327.879L-557.092,-326.19ZM-1334.825,110.756L-1307.339,99.68L-1262.645,75.165L-1237.523,53.937L-1212.623,43.274L-1191.491,38.714L-1181.189,21.518L-1170.101,13.188L-1165.759,0.114L-1136.109,-11.772L-1119.934,-24.343L-1121.305,-45.165L-1130.639,-56.328L-1128.104,-67.236L-1132.776,-77.22L-1150.047,-87.796L-1147.176,-111.356L-1160.945,-116.46L-1152.137,-135.61L-1153.199,-168.063L-1155.247,-171.61L-1132.868,-175.327L-1102.245,-183.534L-1057.492,-191.894L-1025.842,-194.443L-1000.042,-192.859L-970.56,-188.175L-942.29,-188.029L-875.93,-172.139L-858.312,-165.932L-847.461,-152.992L-830.312,-139.868L-821.1,-136.627L-788.908,-147.039L-761.5,-145.422L-727.643,-146.262L-711.527,-140.298L-693.538,-138.879L-682.169,-144.615L-658.37,-148.288L-643.653,-157.713L-636.598,-157.539L-620.498,-177.231L-596.088,-192.31L-588.161,-193.911L-572.528,-206.952L-561.534,-207.612L-546.151,-202.865L-532.616,-207.016L-524.843,-220.274L-522.049,-242.591L-526.484,-289.331L-541.434,-300.5L-532.178,-312.897L-521.163,-315.127L-520.082,-306.543L-503.216,-316.21L-504.939,-327.411L-518.994,-340.323L-536.247,-337.409L-531.957,-344.661L-542.827,-358.449L-554.416,-359.366L-552.464,-379.925L-538.427,-408.841L-523.696,-409.307L-505.359,-419.146L-504.683,-431.511L-490.507,-436.425L-468.958,-449.484L-462.097,-447.831L-449.392,-454.661L-429.172,-473.001L-425.497,-484.699L-415.62,-497.379L-382.632,-527.017L-357.657,-551.662L-313.164,-586.05L-313.789,-589.179L-260.664,-615.04L-240.178,-630.212L-226.459,-629.659L-209.317,-638.54L-189.03,-630.268L-174.453,-632.304L-105.164,-627.8L-64.769,-626.244L16.905,-627.508L35.194,-626.774L106.151,-627.685L106.307,-599.539L100.793,-591.914L97.38,-575.724L107.003,-560.801L99.041,-546.776L96.988,-523.073L93.744,-515.143L96.415,-497.016L110.523,-473.999L113.224,-456.135L103.546,-435.695L108.314,-406.174L105.029,-396.955L90,-381.026L85.623,-358.158L78.971,-337.925L85.785,-330.805L84.416,-304.261L91.795,-286.811L87.546,-270.394L96.555,-255.491L83.548,-230.754L77.43,-201.484L85.083,-194.605L90.92,-211.501L105.737,-211.182L107.009,-197.484L117.001,-189.796L113.618,-101.395L106.644,7.296L106.247,26.371L102.887,35.843L108.862,52.73L79.846,148.3L50.421,249.493L54.964,260.431L45.193,369.032L39.357,444.976L35.129,486.4L49.923,511.768L-6.047,543.919L9.521,570.631L8.493,579.117L2.524,589.8L-14.847,600.182L-17.016,620.504L-27.595,619.705L-20.675,635.37L-5.414,613.328L3.447,617.426L11.866,606.804L29.134,600.265L43.798,600.098L47.252,591.667L64.979,599.81L66.842,589.275L74.006,596.656L90.239,599.068L104.769,605.301L123.635,598.453L125.476,587.397L139.343,585.596L147.421,588.839L208.446,589.074L240.242,584.365L251.687,579.872L276.267,563.922L283.693,553.69L293.473,550.444L304.157,537.66L321.244,532.408L330.973,533.01L316.247,546.287L308.926,547.764L321.03,555.873L324.989,567.255L338.778,570.468L347.768,564.093L360.636,582.755L372.862,578.454L391.631,566.188L393.295,558.977L407.116,556.21L416.849,559.347L412.764,564.745L358.153,588.669L294.369,619.825L253.428,635.343L186.995,658.38L143.358,677.753L108.006,687.653L85.864,690.292L81.04,686.32L28.342,700.598L-21.497,696.752L-59.532,709.891L-56.797,700.164L-75.63,700.134L-72.986,693.761L-81.684,683.44L-75.695,674.587L-81.955,665.112L-76.887,659.587L-73.128,642.927L-62.854,626.456L-45.198,578.716L-47.499,573.749L-152.647,507.026L-222.256,459.91L-232.222,445.342L-231.121,437.643L-244.114,439.209L-246.316,433.447L-266.52,433.427L-264.722,428.854L-276.48,419.867L-285.403,420.795L-285.851,412.003L-304.781,382.058L-298.214,379.236L-298.116,338.21L-309.128,332.329L-302.361,324.356L-309.849,311.396L-331.117,301.708L-343.184,302.212L-348.449,276.171L-352.497,277.023L-363.014,261.323L-448.6,257.771L-583.687,250.305L-672.328,244.019L-756.261,239.437L-950.318,225.882L-1083.541,214.726L-1145.027,210.274L-1341.908,191.922L-1342.655,191.332Z M106.151,-627.685L160.3,-627.887L247.968,-626.467L278.434,-623.75L325.696,-621.95L369.165,-622.106L497.274,-624.233L488.883,-616.491L498.801,-593.517L485.04,-574.163L481.968,-557.648L470.469,-544.241L478.867,-517.908L486.53,-508.095L484.982,-489.259L476.529,-485.912L481.125,-470.683L468.814,-465.022L463.408,-453.42L452.608,-443.381L434.115,-439.823L430.214,-426.421L417.858,-421.052L410.164,-424.441L383.133,-416.334L375.316,-400.647L379.891,-391.845L375.16,-377.171L382.779,-359.579L382.703,-347.455L373.294,-329.717L363.914,-318.433L363.755,-296.508L348.867,-279.34L349.512,-262.828L344.753,-251.518L329.868,-240.556L322.753,-229.273L317.807,-201.208L306.015,-192.815L301.911,-173.773L305.725,-164.707L297.533,-129.978L302.07,-114.456L292.482,-98.055L288.947,-62.508L292.694,-45.705L285.516,-37.276L290.09,-23.816L283.656,-12.284L273.379,-9.826L272.414,4.861L265.081,23.595L274.245,50.007L279.02,47.484L285.983,61.23L108.862,52.73L102.887,35.843L106.247,26.371L106.644,7.296L113.618,-101.395L117.001,-189.796L107.009,-197.484L105.737,-211.182L90.92,-211.501L85.083,-194.605L77.43,-201.484L83.548,-230.754L96.555,-255.491L87.546,-270.394L91.795,-286.811L84.416,-304.261L85.785,-330.805L78.971,-337.925L85.623,-358.158L90,-381.026L105.029,-396.955L108.314,-406.174L103.546,-435.695L113.224,-456.135L110.523,-473.999L96.415,-497.016L93.744,-515.143L96.988,-523.073L99.041,-546.776L107.003,-560.801L97.38,-575.724L100.793,-591.914L106.307,-599.539Z M565.657,377.87L580.16,382.454L582.791,431.174L566.697,443.099L561.764,416.817L563.32,400.31L555.247,394.664L556.985,435.654L543.264,435.176L541.671,444.204L533.6,446.026L532.767,431.847L545.615,407.324L552.012,389.775ZM527.847,382.351L531.867,380.539L540.75,393.929L536.727,395.742ZM519.869,442.437L524.694,429.281L521.46,423.356L525.471,408.654L528.703,413.805L528.739,435.721ZM472.117,532.681L481.057,512.062L485.106,515.675L485.905,535.273ZM416.352,484.566L422.854,477.115L420.506,457.509L430.209,455.483L432.814,401.603L432.945,362.929L430.733,305.684L430.83,278.098L523.674,274.845L523.727,312.744L533.346,311.182L531.78,332.068L535.823,346.499L551.109,354.97L559.186,367.321L556.809,378.931L545.571,389.534L540.715,378.717L543.912,369.685L528.608,355.794L522.165,345.49L526.232,378.744L508.527,374.379L518.191,384.427L519.018,403.763L509.351,406.608L515.811,420.268L515.829,438.832L507.763,450.441L501.306,469.266L491.604,467.718L469.771,472.34L447.916,481.063L417.144,488.695Z"/>
+          <path class="ma" d="M773.202,485.596L783.814,491.63L807.265,489.977L821.759,485.354L831.155,467.141L844.578,493.982L843.908,501.731L835.882,506L809.134,505.42L775.701,490.46ZM647.678,474.094L662.234,473.974L677.381,450.632L699.026,434.945L707.946,438.717L713.799,456.702L726.001,463.523L733.956,453.112L733.414,474.779L700.255,474.9L675.206,477.469L660.75,489.716ZM108.862,52.73L285.983,61.23L443.439,68.271L543.187,71.387L551.07,59.506L567.685,59.194L566.835,43.211L578.653,33.882L593.689,38.452L600.714,22.429L629.084,14L640.983,21.648L647.273,18.247L649.002,36.798L656.41,71.803L676.319,83.742L685.717,72.821L696.895,81.473L684.451,104.806L666.225,106.783L636.149,116.052L645.774,128.87L631.571,141.868L625.992,139.586L622.119,154.824L618.871,144.274L610.209,157.993L619.081,177.017L608.716,174.502L604.776,181.744L611.188,188.41L607.245,195.394L618.425,198.936L623.146,189.623L634.285,187.484L641.546,199.548L660.739,206.611L670.407,217.354L672.112,229.199L689.119,253.013L688.449,265.911L682.948,276.021L673.356,277.401L675.815,283.566L692.764,296.549L702.356,294.386L708.833,300.503L715.489,321.829L711.622,334.764L722.204,347.019L740.795,355.816L768.165,358.542L775.485,364.367L790.588,352.796L805.822,350.493L827.368,341.623L832.074,335.095L830.915,314.744L825.832,299.103L815.548,307.271L815.131,282.266L810.894,268.154L798.755,259.583L791.586,261.501L787.741,271.616L778.714,256.539L789.064,253.546L805.927,257.921L824.574,272.565L839.546,304.019L847.323,334.563L849.579,369.85L838.106,403.323L836.696,414.695L831.012,412.474L840.168,383.43L834.429,377.601L813.53,379.247L779.081,390.1L754.899,388.378L749.358,395.672L735.689,397.652L723.797,413.783L697.221,416.657L669.961,433.939L657.151,446.169L640.247,453.522L621.692,457.519L626.495,450.783L654.692,441.806L667.502,429.578L686.74,416.763L690.667,406.41L688.753,376.262L693.472,365.642L672.504,359.142L672.643,374.353L666.98,370.795L663.875,383.714L652.601,383.035L654.278,391.272L629.337,394.297L623.783,406.968L625.47,418.302L620.681,425.811L600.546,431.86L590.842,427.526L582.791,431.174L580.16,382.454L565.657,377.87L559.186,367.321L551.109,354.97L535.823,346.499L531.78,332.068L533.346,311.182L523.727,312.744L523.674,274.845L430.83,278.098L430.046,273.454L268.445,268.843L250.832,269.654L217.252,267.642L214.703,277.66L203.473,279.037L204.452,267.449L161.268,265.961L66.965,260.448L54.964,260.431L50.421,249.493L79.846,148.3Z"/>
+          <path class="co" d="M610.379,186.352L599.242,189.251L595.315,200.101L583.369,202.737L579.423,212.036L565.804,195.589L572.155,189.378L574.555,191.946L584.839,175.659L573.716,181.379L569.711,175.207L579.234,168.207L585.63,174.624L592.771,169.949L602.194,146.952L616.504,147.125M324.742,63.173L326.988,77.374L336.461,81.067L336.342,94.989L328.373,99.561L327.399,119.663L332.901,125.9L322.486,135.861L323.968,147.478L319.14,153.621L316.535,176.543L307.656,188.574L307.845,169.754L303.239,153.206L279.337,157.071L277.839,149.06L230.816,156.964L231.81,142.797L219.064,144.676L215.183,138.43L193.813,132.941L193.298,115.656L171.153,110.903L177.141,85.477L176.472,78.246L167.805,75.517L178.257,66.414L161.626,66.64L161.829,55.298M644.618,391.607L634.67,351.974L626.572,342.749L603.302,346.759L600.831,335.429L615.199,321.938L609.462,301.347L598.189,291.355L590.785,251.688L625.03,232.925L627.286,212.542L624.053,206.118L630.388,199.887L627.156,193.464L618.399,194.811M647.132,200.278L640.813,208.061L647.287,219.871L657.53,204.318M712.439,336.044L706.902,343.583L691.712,350.706L689.436,364.136M171.153,110.903L172.656,115.828L162.283,163.609L150.401,160.558L150.866,178.617L164.316,183.758L163.187,202.561L156.235,234.412L148.272,232.978L147.174,249.203L150.874,265.516M523.689,285.158L527.692,284.894L590.785,251.688M572.155,189.378L573.716,181.379M498.065,275.379L498.864,250.628L502.057,233.611L513.231,226.644L532.377,220.431L534.742,205.731L541.122,205.975L535.501,186.393L548.234,181.98L557.8,184.788L565.804,195.589M164.316,183.758L174.828,174.657L189.899,178.26L191.166,198.393L183.86,206.267L192.524,213.112L195.829,205.945L210.163,207.457L212.389,218.578L233.864,223.788L233.192,214.754L240.431,210.471L245.402,196.614L253.349,198.523L247.633,208.762L254.725,215.558L296.276,209.856L298.523,223.803L304.973,217.424L336.984,206.377L327.251,224.598L341.563,231.425L355.935,231.537L355.641,270.982M602.194,146.952L596.58,137.443L599.68,122.988L591.73,120.967L595.632,108.056L601.978,108.022L594.784,97.49L578.148,100.662L551.139,83.484L555.088,79.605L551.07,59.506M409.407,66.854L418.859,77.982L418.016,90.097L436.253,87.071L460.798,96.932L457.575,121.419L467.098,123.241L471.08,114.739L488.536,117.591L490.915,124.553L483.759,138.214L487.731,140.537L484.541,157.036L469.403,175.324L478.944,187.196L500.451,181.533L495.671,201.385L484.512,200.091L474.928,215.036L485.292,225.874L496.467,223.041L502.057,233.611M336.984,206.377L339.542,186.546L325.178,189.257L322.132,174.017L316.535,176.543M678.726,421.998L684.409,425.811"/>
+          <g id="dots"></g>
+        </g>
+      </svg>
+      <div class="ctrl"><button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">&minus;</button><button id="zreset" aria-label="Reset view" style="font-size:13px">&#8634;</button></div>
+      <div class="tip" id="tip"></div>
+      <div class="note">Each pin is geocoded from the school's street address.</div>
+    </div>
+    <aside>
+      <div class="search">
+        <input id="q" type="search" placeholder="Search school, address, district or town" aria-label="Search schools">
+        <div class="count" id="count"></div>
+      </div>
+      <ul class="list" id="list"></ul>
+    </aside>
+  </main>
+  <p class="foot">Source list: 2026 Schools of Recognition as supplied. Street addresses come from school, district and directory pages, with Kittredge, Berkshire Arts and Technology, Kennedy Academy and Page Hilltop confirmed by you. Pins come from TomTom street-level geocoding of those addresses; where the geocoder matched a nearby number or ZIP, the tooltip says so. Grade spans come from school and directory pages; schools listed without a span (most high schools and junior/senior highs) are classified by name. None of the 56 is a K-8 school. Boundaries are from US Census cartographic data (us-atlas).</p>
+</div>
+
+<script>
+(function () {
+  var DATA = [{"n":"Atkinson","d":"North Andover","t":"North Andover","g":"district","l":"elem","gr":"1-5","a":"111 Phillips Brooks Road, North Andover, MA 01845","p":"addr","nt":"","cx":580.7,"cy":73.4,"x":580.7,"y":73.4},{"n":"Bay Path Regional Vocational Technical High School","d":"Southern Worcester County Regional Vocational School District","t":"Charlton","g":"vocational","l":"high","gr":"","a":"57 Old Muggett Hill Road, Charlton, MA 01507","p":"addr","nt":"","cx":395.9,"cy":239.7,"x":395.9,"y":239.7},{"n":"Benjamin G Brown","d":"Somerville","t":"Somerville","g":"district","l":"elem","gr":"K-5","a":"201 Willow Avenue, Somerville, MA 02144","p":"addr","nt":"","cx":583,"cy":161.1,"x":583,"y":161.1},{"n":"Bennett-Hemenway","d":"Natick","t":"Natick","g":"district","l":"elem","gr":"K-4","a":"22 East Evergreen Road, Natick, MA 01760","p":"addr","nt":"","cx":529,"cy":188.2,"x":529,"y":188.2},{"n":"Berkshire Arts and Technology Charter Public School","d":"Berkshire Arts and Technology Charter Public","t":"Adams","g":"charter","l":"midhigh","gr":"6-12","a":"1 Commercial Street #2, Adams, MA 01220","p":"addr","nt":"","cx":139.4,"cy":91.2,"x":139.4,"y":91.2},{"n":"Betsey B Winslow","d":"New Bedford","t":"New Bedford","g":"district","l":"elem","gr":"K-5","a":"561 Allen Street, New Bedford, MA 02740","p":"addr","nt":"","cx":622.1,"cy":392.6,"x":622.1,"y":392.6},{"n":"Boston Latin School","d":"Boston","t":"Boston","g":"district","l":"midhigh","gr":"","a":"78 Avenue Louis Pasteur, Boston, MA 02115","p":"addr","nt":"","cx":585.7,"cy":179,"x":585.7,"y":179},{"n":"Boston Preparatory Charter Public School","d":"Boston Preparatory Charter Public","t":"Boston","g":"charter","l":"midhigh","gr":"6-12","a":"885 River Street, Hyde Park, MA 02136","p":"addr","nt":"","cx":584,"cy":201.7,"x":584,"y":201.7},{"n":"Cabot","d":"Newton","t":"Newton","g":"district","l":"elem","gr":"K-5","a":"229 Cabot Street, Newtonville, MA 02460","p":"addr","nt":"","cx":564.3,"cy":175.7,"x":564.3,"y":175.7},{"n":"Charles W Morey","d":"Lowell","t":"Lowell","g":"district","l":"elem","gr":"PK-4","a":"130 Pine Street, Lowell, MA 01851","p":"addr","nt":"","cx":534.7,"cy":90.8,"x":534.7,"y":90.8},{"n":"Clifford M Granger","d":"Agawam","t":"Agawam","g":"district","l":"elem","gr":"K-4","a":"31 South Westfield Street, Feeding Hills, MA 01030","p":"addr","nt":"","cx":235.3,"cy":259,"x":235.3,"y":259},{"n":"Clinton Senior High","d":"Clinton","t":"Clinton","g":"district","l":"high","gr":"","a":"200 West Boylston Street, Clinton, MA 01510","p":"addr","nt":"","cx":452.3,"cy":157.8,"x":452.3,"y":157.8},{"n":"Collegiate Charter School of Lowell","d":"Collegiate Charter School of Lowell","t":"Lowell","g":"charter","l":"k12","gr":"K-12","a":"1857 Middlesex Street, Lowell, MA 01851","p":"addr","nt":"","cx":528.7,"cy":89.5,"x":528.7,"y":89.5},{"n":"Columbus Park","d":"Worcester","t":"Worcester","g":"district","l":"elem","gr":"PK-6","a":"75 Lovell Street, Worcester, MA 01603","p":"addr","nt":"","cx":423.5,"cy":204.6,"x":423.5,"y":204.6},{"n":"Cove Elementary","d":"Beverly","t":"Beverly","g":"district","l":"elem","gr":"K-4","a":"20 Eisenhower Avenue, Beverly, MA 01915","p":"addr","nt":"","cx":639.2,"cy":113.1,"x":639.2,"y":113.1},{"n":"Dudley Street Neighborhood Charter School","d":"Dudley Street Neighborhood Charter School","t":"Boston","g":"charter","l":"elem","gr":"PK-5","a":"6 Shirley Street, Boston, MA 02119","p":"addr","nt":"","cx":592.2,"cy":183.3,"x":592.2,"y":183.3},{"n":"Edward M. Kennedy Academy for Health Careers: A Horace Mann Charter Public School","d":"Edward M. Kennedy Academy for Health Careers: A Horace Mann Charter Public","t":"Boston","g":"charter","l":"high","gr":"9-12","a":"152 Arlington Street, Boston, MA 02116","p":"addr","nt":"","cx":593,"cy":175.8,"x":593,"y":175.8},{"n":"Essex Elementary","d":"Manchester Essex Regional","t":"Essex","g":"district","l":"elem","gr":"K-5","a":"12 Story Street, Essex, MA 01929","p":"addr","nt":"","cx":654.2,"cy":90.3,"x":654.2,"y":90.3},{"n":"Frances Drake School","d":"Leominster","t":"Leominster","g":"district","l":"elem","gr":"K-5","a":"95 Viscoloid Avenue, Leominster, MA 01453","p":"addr","nt":"","cx":443.2,"cy":124.9,"x":443.2,"y":124.9},{"n":"Francis J McGrath Elementary","d":"Worcester","t":"Worcester","g":"district","l":"elem","gr":"PK-6","a":"493 Grove Street, Worcester, MA 01605","p":"addr","nt":"","cx":428,"cy":194.9,"x":428,"y":194.9},{"n":"Frederick C Murphy","d":"Weymouth","t":"Weymouth","g":"district","l":"elem","gr":"K-5","a":"417 Front Street, Weymouth, MA 02188","p":"addr","nt":"","cx":617.3,"cy":218.5,"x":617.3,"y":218.5},{"n":"Georgetown High School","d":"Georgetown","t":"Georgetown","g":"district","l":"high","gr":"","a":"11 Winter Street, Georgetown, MA 01833","p":"addr","nt":"","cx":610.7,"cy":62.9,"x":610.7,"y":62.9},{"n":"Grafton High School","d":"Grafton","t":"Grafton","g":"district","l":"high","gr":"","a":"24 Providence Road, Grafton, MA 01519","p":"addr","nt":"","cx":454.1,"cy":217.1,"x":454.1,"y":217.1},{"n":"Granby Jr Sr High School","d":"Granby","t":"Granby","g":"district","l":"midhigh","gr":"","a":"385 East State Street, Granby, MA 01033","p":"addr","nt":"","cx":276.7,"cy":199.5,"x":276.7,"y":199.5},{"n":"Grew Elementary School","d":"Boston","t":"Boston","g":"district","l":"elem","gr":"K-5","a":"40 Gordon Avenue, Hyde Park, MA 02136","p":"addr","nt":"","cx":580.2,"cy":203.4,"x":580.2,"y":203.4},{"n":"H H Galligan","d":"Taunton","t":"Taunton","g":"district","l":"elem","gr":"K-4","a":"15 Sheridan Street, Taunton, MA 02780","p":"addr","nt":"","cx":585,"cy":310.2,"x":585,"y":310.2},{"n":"Holbrook Middle High School","d":"Holbrook","t":"Holbrook","g":"district","l":"midhigh","gr":"","a":"245 South Franklin Street, Holbrook, MA 02343","p":"addr","nt":"","cx":607.8,"cy":236.7,"x":607.8,"y":236.7},{"n":"Hopkinton High","d":"Hopkinton","t":"Hopkinton","g":"district","l":"high","gr":"","a":"90 Hayden Rowe Street, Hopkinton, MA 01748","p":"addr","nt":"","cx":493.1,"cy":215.4,"x":493.1,"y":215.4},{"n":"James Fitzgerald Elementary School","d":"Waltham","t":"Waltham","g":"district","l":"elem","gr":"K-5","a":"138 Beal Road, Waltham, MA 02453","p":"addr","nt":"","cx":561.8,"cy":166.3,"x":561.8,"y":166.3},{"n":"Kittredge","d":"Central Berkshire","t":"Hinsdale","g":"district","l":"elem","gr":"PK-5","a":"80 Maple Street, Hinsdale, MA 01235","p":"addr","nt":"","cx":138,"cy":145.6,"x":138,"y":145.6},{"n":"Libertas Academy Charter School","d":"Libertas Academy Charter School","t":"Springfield","g":"charter","l":"midhigh","gr":"6-12","a":"146 Chestnut Street, Springfield, MA 01103","p":"addr","nt":"","cx":254.8,"cy":247.4,"x":254.8,"y":247.4},{"n":"Lincoln-Thomson","d":"Lynn","t":"Lynn","g":"district","l":"elem","gr":"K-5","a":"115 Gardiner Street, Lynn, MA 01905","p":"addr","nt":"","cx":613.2,"cy":139.8,"x":613.2,"y":139.8},{"n":"Lynch Elementary","d":"Winchester","t":"Winchester","g":"district","l":"elem","gr":"PK-5","a":"10 Brantwood Road, Winchester, MA 01890","p":"addr","nt":"","cx":574.8,"cy":142.1,"x":574.8,"y":142.1},{"n":"Malcolm White","d":"Woburn","t":"Woburn","g":"district","l":"elem","gr":"K-5","a":"36 Bow Street, Woburn, MA 01801","p":"addr","nt":"","cx":576.4,"cy":135.4,"x":576.4,"y":135.4},{"n":"Mary D Altavesta","d":"Woburn","t":"Woburn","g":"district","l":"elem","gr":"K-5","a":"980 1/2 Main Street, Woburn, MA 01801","p":"addr","nt":"","cx":572,"cy":126.4,"x":572,"y":126.4},{"n":"Mary M Walsh","d":"Springfield","t":"Springfield","g":"district","l":"elem","gr":"PK-5","a":"50 Empress Court, Springfield, MA 01129","p":"addr","nt":"","cx":276.2,"cy":244.7,"x":276.2,"y":244.7},{"n":"Maynard High","d":"Maynard","t":"Maynard","g":"district","l":"high","gr":"","a":"1 Tiger Drive, Maynard, MA 01754","p":"addr","nt":"","cx":508,"cy":153.9,"x":508,"y":153.9},{"n":"Midland Street","d":"Worcester","t":"Worcester","g":"district","l":"elem","gr":"K-6","a":"18 Midland Street, Worcester, MA 01602","p":"addr","nt":"","cx":424.9,"cy":199.1,"x":424.9,"y":199.1},{"n":"Mystic Valley Regional Charter School","d":"Mystic Valley Regional Charter","t":"Malden","g":"charter","l":"k12","gr":"K-12","a":"4 Laurel Street, Malden, MA 02148","p":"addr","nt":"","cx":598.4,"cy":149.8,"x":598.4,"y":149.8},{"n":"Norwell High","d":"Norwell","t":"Norwell","g":"district","l":"high","gr":"","a":"18 South Street, Norwell, MA 02061","p":"addr","nt":"","cx":645.4,"cy":233,"x":645.4,"y":233},{"n":"Oakdale","d":"Dedham","t":"Dedham","g":"district","l":"elem","gr":"1-5","a":"147 Cedar Street, Dedham, MA 02026","p":"addr","nt":"","cx":574.1,"cy":208.8,"x":574.1,"y":208.8},{"n":"Page Hilltop Elementary School","d":"Ayer Shirley School District","t":"Ayer","g":"district","l":"elem","gr":"PK-5","a":"115 Washington Street, Ayer, MA 01432","p":"addr","nt":"","cx":480.6,"cy":110.7,"x":480.6,"y":110.7},{"n":"Philip G Coburn","d":"West Springfield","t":"West Springfield","g":"district","l":"elem","gr":"PK-5","a":"115 Southworth Street, West Springfield, MA 01089","p":"addr","nt":"","cx":247.9,"cy":246.7,"x":247.9,"y":246.7},{"n":"PROMISE College and Career Academy","d":"Brockton","t":"Brockton","g":"district","l":"high","gr":"9-12","a":"1121 Warren Avenue, Brockton, MA 02301","p":"addr","nt":"","cx":604.5,"cy":261.5,"x":604.5,"y":261.5},{"n":"Rising Tide Charter Public School","d":"Rising Tide Charter Public","t":"Plymouth","g":"charter","l":"midhigh","gr":"5-12","a":"59 Armstrong Road, Plymouth, MA 02360","p":"addr","nt":"","cx":676.8,"cy":292.9,"x":676.8,"y":292.9},{"n":"Rumney Marsh Academy","d":"Revere","t":"Revere","g":"district","l":"middle","gr":"6-8","a":"140 American Legion Highway, Revere, MA 02151","p":"addr","nt":"","cx":607.3,"cy":156.1,"x":607.3,"y":156.1},{"n":"Samuel Bowles","d":"Springfield","t":"Springfield","g":"district","l":"elem","gr":"PK-5","a":"24 Bowles Park, Springfield, MA 01104","p":"addr","nt":"","cx":260.9,"cy":235.9,"x":260.9,"y":235.9},{"n":"Sandwich Middle High School","d":"Sandwich","t":"Sandwich","g":"district","l":"midhigh","gr":"","a":"365 Quaker Meetinghouse Road, East Sandwich, MA 02537","p":"addr","nt":"","cx":730.6,"cy":358.5,"x":730.6,"y":358.5},{"n":"Snug Harbor Community School","d":"Quincy","t":"Quincy","g":"district","l":"elem","gr":"PK-5","a":"333 Palmer Street, Quincy, MA 02169","p":"addr","nt":"","cx":616,"cy":203.6,"x":616,"y":203.6},{"n":"Swampscott High","d":"Swampscott","t":"Swampscott","g":"district","l":"high","gr":"","a":"200 Essex Street, Swampscott, MA 01907","p":"addr","nt":"","cx":626.1,"cy":136.4,"x":626.1,"y":136.4},{"n":"The Bromfield High School","d":"Harvard","t":"Harvard","g":"district","l":"high","gr":"","a":"14 Massachusetts Avenue, Harvard, MA 01451","p":"addr","nt":"","cx":478.5,"cy":131.2,"x":478.5,"y":131.2},{"n":"Walton","d":"Wakefield","t":"Wakefield","g":"district","l":"elem","gr":"K-4","a":"18 Davidson Road, Wakefield, MA 01880","p":"addr","nt":"","cx":589.1,"cy":128.2,"x":589.1,"y":128.2},{"n":"West Boylston Junior/Senior High","d":"West Boylston","t":"West Boylston","g":"district","l":"midhigh","gr":"","a":"125 Crescent Street, West Boylston, MA 01583","p":"addr","nt":"","cx":432.9,"cy":168.5,"x":432.9,"y":168.5},{"n":"William P. Sapelli Elementary","d":"Agawam","t":"Agawam","g":"district","l":"elem","gr":"K-4","a":"65 Begley Street, Agawam, MA 01001","p":"addr","nt":"","cx":243.1,"cy":251.9,"x":243.1,"y":251.9},{"n":"Williamstown Elementary","d":"Mount Greylock","t":"Williamstown","g":"district","l":"elem","gr":"PK-6","a":"115 Church Street, Williamstown, MA 01267","p":"addr","nt":"","cx":123.3,"cy":62.1,"x":123.3,"y":62.1},{"n":"Worcester Arts Magnet School","d":"Worcester","t":"Worcester","g":"district","l":"elem","gr":"PK-6","a":"315 Saint Nicholas Avenue, Worcester, MA 01606","p":"addr","nt":"","cx":436.3,"cy":189.3,"x":436.3,"y":189.3}];
+  var LABEL = { district: 'District school', charter: 'Charter school', vocational: 'Vocational school' };
+  var LEVEL = { elem: 'Elementary', middle: 'Middle', high: 'High school', midhigh: 'Middle-high', k12: 'K-12' };
+  var LEVELS = ['elem', 'middle', 'high', 'midhigh', 'k12'];
+  var PREC = { addr: '' };
+  var svg = document.getElementById('svg'), world = document.getElementById('world'), dots = document.getElementById('dots');
+  var tip = document.getElementById('tip'), box = document.getElementById('mapbox');
+  var list = document.getElementById('list'), q = document.getElementById('q'), countEl = document.getElementById('count');
+  var NS = 'http://www.w3.org/2000/svg';
+  var on = { district: true, charter: true, vocational: true };
+  var onL = { elem: true, middle: true, high: true, midhigh: true, k12: true };
+  function lvText(s) { return s.gr ? LEVEL[s.l] + ' (grades ' + s.gr + ')' : LEVEL[s.l]; }
+  var view = { k: 1, x: 0, y: 0 };
+  var hotIdx = -1;
+  var BASE_R = 5.2;
+
+  var CG = { district: 0, charter: 0, vocational: 0 }, CL = { elem: 0, middle: 0, high: 0, midhigh: 0, k12: 0 };
+  DATA.forEach(function (s) { CG[s.g]++; CL[s.l]++; });
+
+  function chip(host, key, text, count, map, colorVar) {
+    var b = document.createElement('button');
+    b.className = 'chip'; b.type = 'button'; b.setAttribute('aria-pressed', 'true');
+    if (colorVar) b.style.setProperty('--c', colorVar);
+    b.innerHTML = '<i></i>' + text + ' <b>' + count + '</b>';
+    b.addEventListener('click', function () {
+      map[key] = !map[key]; b.setAttribute('aria-pressed', String(map[key])); render();
+    });
+    host.appendChild(b);
+  }
+  var legend = document.getElementById('legend'), gov = document.getElementById('gov');
+  LEVELS.forEach(function (l) { chip(legend, l, LEVEL[l], CL[l], onL, 'var(--l-' + l + ')'); });
+  ['district', 'charter', 'vocational'].forEach(function (g) { chip(gov, g, LABEL[g].replace(' school', ''), CG[g], on, null); });
+
+  var circles = DATA.map(function (s, i) {
+    var c = document.createElementNS(NS, 'circle');
+    c.setAttribute('class', 'dot ' + s.l); c.setAttribute('cx', s.x); c.setAttribute('cy', s.y);
+    c.addEventListener('mouseenter', function () { hot(i, true); });
+    c.addEventListener('mouseleave', function () { hot(-1, false); });
+    c.addEventListener('click', function (e) { e.stopPropagation(); hot(i, true); });
+    dots.appendChild(c);
+    return c;
+  });
+
+  var rows = DATA.map(function (s, i) {
+    var li = document.createElement('li');
+    li.className = 'row'; li.tabIndex = 0; li.style.setProperty('--c', 'var(--l-' + s.l + ')');
+    li.innerHTML = '<i></i><div><div class="n"></div><div class="ad"></div><div class="m"></div></div>';
+    li.querySelector('.n').textContent = s.n;
+    li.querySelector('.ad').textContent = s.a;
+    li.querySelector('.m').textContent = lvText(s) + ' · ' + s.d;
+    function go() { hot(i, true); zoomTo(s); }
+    li.addEventListener('click', go);
+    li.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+    list.appendChild(li);
+    return li;
+  });
+
+  function passes(s) { return on[s.g] && onL[s.l]; }
+  function visible(s) {
+    if (!passes(s)) return false;
+    var t = q.value.trim().toLowerCase();
+    return !t || (s.n + ' ' + s.d + ' ' + s.t + ' ' + s.a + ' ' + LEVEL[s.l] + ' ' + (s.gr || '')).toLowerCase().indexOf(t) > -1;
+  }
+
+  function render() {
+    var n = 0;
+    DATA.forEach(function (s, i) {
+      var v = visible(s); if (v) n++;
+      rows[i].hidden = !v;
+      circles[i].style.display = passes(s) ? '' : 'none';
+      circles[i].classList.toggle('dim', passes(s) && !v);
+    });
+    countEl.textContent = n + ' of ' + DATA.length + ' schools shown';
+  }
+
+  function hot(i, show) {
+    if (hotIdx > -1) { circles[hotIdx].classList.remove('hot'); rows[hotIdx].classList.remove('hot'); }
+    hotIdx = i;
+    if (i < 0) { tip.style.display = 'none'; return; }
+    circles[i].classList.add('hot'); rows[i].classList.add('hot');
+    var s = DATA[i];
+    tip.innerHTML = '<strong></strong><span></span><span class="a"></span><em></em>';
+    tip.querySelector('strong').textContent = s.n;
+    tip.querySelector('.a').textContent = s.a;
+    tip.querySelector('.a').style.display = 'block';
+    tip.querySelectorAll('span')[0].textContent = lvText(s) + ' · ' + LABEL[s.g] + ' · ' + s.d;
+    var em = tip.querySelector('em'); em.textContent = (PREC[s.p] + ' ' + s.nt).trim(); em.hidden = !em.textContent;
+    placeTip(s);
+    tip.style.display = 'block';
+    circles[i].parentNode.appendChild(circles[i]);
+  }
+
+  function toScreen(s) {
+    var r = svg.getBoundingClientRect(), sc = r.width / 900;
+    return { x: (s.x * view.k + view.x) * sc, y: (s.y * view.k + view.y) * sc };
+  }
+  function placeTip(s) {
+    var p = toScreen(s);
+    var w = box.clientWidth;
+    var x = Math.min(Math.max(p.x, 130), w - 130);
+    tip.style.left = x + 'px'; tip.style.top = Math.max(p.y, 70) + 'px';
+  }
+
+  function apply() {
+    world.setAttribute('transform', 'translate(' + view.x + ' ' + view.y + ') scale(' + view.k + ')');
+    var r = BASE_R / Math.sqrt(view.k);
+    circles.forEach(function (c) { c.setAttribute('r', r); });
+    world.style.setProperty('--sw', 1 / view.k);
+    if (hotIdx > -1) placeTip(DATA[hotIdx]);
+  }
+  function clamp() {
+    var k = view.k;
+    view.x = Math.min(0, Math.max(900 - 900 * k, view.x));
+    view.y = Math.min(0, Math.max(520 - 520 * k, view.y));
+  }
+  function zoomAt(f, px, py) {
+    var nk = Math.min(14, Math.max(1, view.k * f)); f = nk / view.k;
+    view.x = px - (px - view.x) * f; view.y = py - (py - view.y) * f; view.k = nk; clamp(); apply();
+  }
+  function zoomTo(s) {
+    view.k = 6; view.x = 450 - s.cx * 6; view.y = 260 - s.cy * 6; clamp(); apply();
+  }
+  function svgPoint(e) {
+    var r = svg.getBoundingClientRect();
+    return { x: (e.clientX - r.left) * 900 / r.width, y: (e.clientY - r.top) * 520 / r.height };
+  }
+
+  svg.addEventListener('wheel', function (e) {
+    e.preventDefault(); var p = svgPoint(e); zoomAt(e.deltaY < 0 ? 1.25 : 0.8, p.x, p.y);
+  }, { passive: false });
+  var drag = null;
+  svg.addEventListener('pointerdown', function (e) {
+    drag = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y }; svg.setPointerCapture(e.pointerId); svg.classList.add('drag');
+  });
+  svg.addEventListener('pointermove', function (e) {
+    if (!drag) return;
+    var r = svg.getBoundingClientRect(), sc = 900 / r.width;
+    view.x = drag.vx + (e.clientX - drag.x) * sc; view.y = drag.vy + (e.clientY - drag.y) * sc; clamp(); apply();
+  });
+  function end() { drag = null; svg.classList.remove('drag'); }
+  svg.addEventListener('pointerup', end); svg.addEventListener('pointercancel', end);
+  svg.addEventListener('click', function () { hot(-1, false); });
+  document.getElementById('zin').addEventListener('click', function () { zoomAt(1.6, 450, 260); });
+  document.getElementById('zout').addEventListener('click', function () { zoomAt(1 / 1.6, 450, 260); });
+  document.getElementById('zreset').addEventListener('click', function () { view = { k: 1, x: 0, y: 0 }; apply(); });
+  q.addEventListener('input', render);
+  window.addEventListener('resize', function () { if (hotIdx > -1) placeTip(DATA[hotIdx]); });
+
+  apply(); render();
+})();
+</script>
+
+</body>
+</html>
